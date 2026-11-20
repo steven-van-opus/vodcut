@@ -8,6 +8,8 @@ skill once per session: its pricing, settings, delivery and talk-to-the-user rul
 Every call carries `context` (15-25 words, third person, no names or personal details) and `llm_model` (your model
 id, or "unknown"). Never show tool names, ids or signed URLs to the user; call the product "AI Producer".
 
+Tools this skill calls (Claude Code names): `mcp__plugin_aip_ai-producer__get_pricing`, `mcp__plugin_aip_ai-producer__get_editing_preset`, `mcp__plugin_aip_ai-producer__sign_upload`, `mcp__plugin_aip_ai-producer__start_transcribe_project`, `mcp__plugin_aip_ai-producer__wait_task`, `mcp__plugin_aip_ai-producer__start_export`, `mcp__plugin_aip_ai-producer__get_export_url`.
+
 ## Per session
 
 1. `get_pricing` with `{}`: the sign-in check and the price table. If preparation is free, say nothing about money;
