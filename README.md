@@ -6,8 +6,8 @@
 
 **Your agent watches the whole stream. You post the 40 seconds that matter.**
 
-My agent watched **[HOURS_SCANNED] hours** of IShowSpeed's GTA 6 stream and found **[MOMENTS_FOUND] moments**
-in **[WALL_TIME]**, for **$0** in API calls.
+My agent watched **23.76 hours** of IShowSpeed's GTA 6 stream and ranked **2,852 thirty-second windows** into
+the top **20 moments** in **1:03:27**, for **$0** in API calls.
 
 </div>
 
@@ -115,14 +115,25 @@ Every script answers `--help`. Tests: `python3 -I -m unittest discover -s tests 
 
 ## The numbers
 
-The launch post's numbers come from one real run, printed by `vodcut.py report <run> --json`:
+The launch line comes from one fresh, uninterrupted run on 2026-11-20, saved as
+[`docs/launch-run.json`](docs/launch-run.json) (its `vodcut.py report --json`, without the transcript lines):
+
+```bash
+python3 -I skills/vodcut/scripts/vodcut.py scan qSyo5d-dVzA vodcut/speed-1118
+```
 
 | | |
 |---|---|
-| Hours scanned | [HOURS_SCANNED] |
-| Moments found | [MOMENTS_FOUND] |
-| Wall time | [WALL_TIME] |
+| Stream | IShowSpeed's first GTA 6 stream on YouTube (`qSyo5d-dVzA`) |
+| Hours scanned | 23.76 |
+| 30-second windows ranked | 2,852 |
+| Moments kept | 20 (the `--moments` default), best first |
+| Wall time | 1:03:27 |
 | API cost | $0 (ffmpeg, yt-dlp and whisper.cpp run locally) |
+
+The wall time runs from the audio download to the ranked moments, on one M1 Ultra Mac that had other jobs
+running. `report` prints a wall time only for a folder whose first scan fetched the audio itself and ran start to
+finish; your machine and connection set yours.
 
 AI Producer's own steps are priced live by AI Producer (`get_pricing`) before anything runs.
 

@@ -82,10 +82,30 @@ class Repo(unittest.TestCase):
                         if tool in ('build_captions', 'add_sound_effects', 'save_editing_preset'):
                             self.fail(f'{f} names {tool}, which the official skill forbids')
 
+    def test_launch_numbers_come_from_the_recorded_run(self):
+        """The launch line quotes one real, uninterrupted run: docs/launch-run.json is its `report --json`."""
+        rec = json.loads(util.read(os.path.join(util.ROOT, 'docs', 'launch-run.json')))
+        rep = rec['report']
+        self.assertIsNone(rep['wall_time_note'])
+        self.assertIsNotNone(rep['WALL_TIME'])
+        self.assertEqual(rep['API_COST_USD'], 0)
+        self.assertEqual(rep['source']['id'], 'qSyo5d-dVzA')
+        self.assertNotIn('top', rep)   # no transcript lines in the repo
+        readme = util.read(os.path.join(util.ROOT, 'README.md'))
+        hero = readme.split('\n---\n', 1)[0]
+        for value in (f"**{rep['HOURS_SCANNED']} hours**", f"**{rep['WINDOWS_RANKED']:,} thirty-second windows**",
+                      f"**{rep['MOMENTS_RANKED']} moments**", f"**{rep['WALL_TIME']}**"):
+            self.assertIn(value, hero)
+        numbers = readme[readme.index('## The numbers'):readme.index('## FAQ')]
+        for value in (f"| {rep['HOURS_SCANNED']} |", f"| {rep['WINDOWS_RANKED']:,} |", f"| {rep['MOMENTS_RANKED']} ",
+                      f"| {rep['WALL_TIME']}"):
+            self.assertIn(value, numbers)
+
     def test_readme_placeholders_and_copy(self):
         readme = util.read(os.path.join(util.ROOT, 'README.md'))
-        for ph in ('[HOURS_SCANNED]', '[MOMENTS_FOUND]', '[WALL_TIME]', '[OWNER]'):
-            self.assertIn(ph, readme)
+        self.assertIn('[OWNER]', readme)
+        for ph in ('[HOURS_SCANNED]', '[MOMENTS_FOUND]', '[WALL_TIME]'):
+            self.assertNotIn(ph, readme)
         for cmd in ('claude plugin install aip@ai-producer-plugins', '/plugin install vodcut@vodcut',
                     'cp -R vodcut/skills/vodcut ~/.claude/skills/vodcut'):
             self.assertIn(cmd, readme)

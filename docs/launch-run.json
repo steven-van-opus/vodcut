@@ -1,0 +1,39 @@
+{
+ "what": "The /vodcut launch numbers: one fresh, uninterrupted scan of a whole VOD, as `vodcut.py report --json` printed it (transcript lines left out).",
+ "command": "python3 -I skills/vodcut/scripts/vodcut.py scan qSyo5d-dVzA vodcut/speed-1118",
+ "stream": "IShowSpeed's first GTA 6 stream on YouTube",
+ "started_at": "2026-11-20T01:38:41",
+ "finished_at": "2026-11-20T02:42:07",
+ "machine": "Apple M1 Ultra (20 cores), macOS 15.7.3, with other jobs running",
+ "tools": {
+  "yt-dlp": "2026.08.19",
+  "whisper.cpp model": "ggml-large-v3-turbo-q5_0.bin",
+  "compute": "local: ffmpeg + whisper.cpp"
+ },
+ "report": {
+  "HOURS_SCANNED": 23.76,
+  "WINDOWS_RANKED": 2852,
+  "MOMENTS_RANKED": 20,
+  "MOMENTS_ADDED_BY_FIND": 0,
+  "WALL_TIME": "1:03:27",
+  "wall_time_s": 3806.7,
+  "wall_time_note": null,
+  "API_COST_USD": 0,
+  "scan_runs": 1,
+  "processing_s": 3806.7,
+  "chunks_transcribed": 72,
+  "phases_s": {
+   "loudness": 41.3,
+   "rank": 0.5,
+   "whisper": 3535.0,
+   "audio_fetch": 229.9
+  },
+  "clips_cut": 0,
+  "source": {
+   "kind": "youtube",
+   "id": "qSyo5d-dVzA",
+   "url": "https://www.youtube.com/watch?v=qSyo5d-dVzA",
+   "protocol": "https"
+  }
+ }
+}
