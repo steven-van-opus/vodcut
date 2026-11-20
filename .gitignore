@@ -1,0 +1,21 @@
+# working folders the skills create in your project
+vodcut/*/
+# media and model files never belong in the repo
+*.mp4
+*.mov
+*.webm
+*.m4a
+*.wav
+*.mp3
+*.bin
+*.frags*/
+*.parts/
+*.raw
+models/
+# local tooling
+node_modules/
+__pycache__/
+*.pyc
+.DS_Store
+# signed upload rows, if one was ever written to the repo by mistake
+*.signed.json

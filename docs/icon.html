@@ -1,0 +1,21 @@
+<!doctype html>
+<!-- Plugin icon for /vodcut: the Slate mascot (shared with gtavi-aiproducer) on the night disc colours.
+     Render: node docs/render.mjs still --html docs/icon.html --out assets/icon.png --width 1024 --height 1024 -->
+<html>
+<head>
+<meta charset="utf-8">
+<title>vodcut icon</title>
+<style>
+  html, body { margin: 0; background: transparent; }
+  #m { display: block; width: 744px; height: 624px; }
+  body.icon { width: 1024px; height: 1024px; background: radial-gradient(circle at 50% 38%, #1D3B6E 0%, #14254A 55%, #0B1020 100%); }
+  body.icon #m { width: 900px; height: 755px; position: absolute; left: 70px; top: 150px; }
+  body.icon::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 120px;
+                     background: linear-gradient(transparent, rgba(25, 227, 196, 0.35)); }
+</style>
+</head>
+<body class="icon">
+<img id="m" src="src/mascot.svg" alt="Slate, a clapperboard character with sunglasses and a megaphone">
+<script>window.__ready = true;</script>
+</body>
+</html>

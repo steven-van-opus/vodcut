@@ -1,0 +1,13 @@
+{
+  "name": "vodcut-docs",
+  "private": true,
+  "type": "module",
+  "description": "Only needed to re-render the README art with docs/render.mjs (uses your installed Chrome).",
+  "scripts": {
+    "art": "node docs/render.mjs still --html docs/hero.html --out docs/hero.png --width 1200 --height 640 --scale 2 --transparent && node docs/render.mjs still --html docs/icon.html --out assets/icon.png --width 1024 --height 1024",
+    "test": "python3 -I -m unittest discover -s tests -v"
+  },
+  "devDependencies": {
+    "puppeteer-core": "^23.11.1"
+  }
+}

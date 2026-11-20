@@ -1,0 +1,35 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "vodcut",
+  "owner": {
+    "name": "[OWNER]"
+  },
+  "metadata": {
+    "description": "Single-plugin marketplace for /vodcut: scan a whole stream VOD locally and open the best moments in AI Producer.",
+    "version": "1.0.0"
+  },
+  "allowCrossMarketplaceDependenciesOn": [
+    "ai-producer-plugins"
+  ],
+  "plugins": [
+    {
+      "name": "vodcut",
+      "source": "./",
+      "description": "One skill: /vodcut scans an entire stream VOD on your machine, finds and verifies the best moments, cuts them 1080x1920 and opens each one as an AI Producer project.",
+      "version": "1.0.0",
+      "author": {
+        "name": "[OWNER]"
+      },
+      "homepage": "https://github.com/[OWNER]/vodcut",
+      "repository": "https://github.com/[OWNER]/vodcut",
+      "license": "MIT",
+      "category": "productivity",
+      "keywords": [
+        "vod",
+        "stream-clips",
+        "ai-producer",
+        "vertical-video"
+      ]
+    }
+  ]
+}
