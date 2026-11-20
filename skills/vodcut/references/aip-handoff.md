@@ -8,7 +8,7 @@ skill once per session: its pricing, settings, delivery and talk-to-the-user rul
 Every call carries `context` (15-25 words, third person, no names or personal details) and `llm_model` (your model
 id, or "unknown"). Never show tool names, ids or signed URLs to the user; call the product "AI Producer".
 
-Tools this skill calls (Claude Code names): `mcp__plugin_aip_ai-producer__get_pricing`, `mcp__plugin_aip_ai-producer__get_editing_preset`, `mcp__plugin_aip_ai-producer__sign_upload`, `mcp__plugin_aip_ai-producer__start_transcribe_project`, `mcp__plugin_aip_ai-producer__wait_task`, `mcp__plugin_aip_ai-producer__start_export`, `mcp__plugin_aip_ai-producer__get_export_url`.
+Tools this skill calls (Claude Code names): `mcp__plugin_aip_ai-producer__get_pricing`, `mcp__plugin_aip_ai-producer__get_editing_preset`, `mcp__plugin_aip_ai-producer__sign_upload`, `mcp__plugin_aip_ai-producer__start_transcribe_project`, `mcp__plugin_aip_ai-producer__wait_task`, `mcp__plugin_aip_ai-producer__finish_project`, `mcp__plugin_aip_ai-producer__start_export`, `mcp__plugin_aip_ai-producer__get_export_url`.
 
 ## Per session
 
@@ -34,13 +34,20 @@ Tools this skill calls (Claude Code names): `mcp__plugin_aip_ai-producer__get_pr
    video or skip): for a batch, ask once and apply the answer to every project.
 6. `wait_task` on the `task_id` (`wait_seconds` 270, repeat until terminal; at most 8 waits at once). Write
    `project_id` and `page_url` into the clip's `.clip.json`.
+7. `authoring: true` marks the project as still being edited (it lapses 30 minutes after the last call that set it),
+   and `finish_project` is what ends that status and unlocks the editor. If no caption/edit pass follows in this
+   session, call `finish_project` once `wait_task` succeeds, then give the `page_url`. It refuses a busy or
+   unsettled project: wait for the running task first.
 
 ## After
 
-Captions, sound effects and edits follow the official `aip:aip` skill on each project. Rough cut: keep it off for
-gameplay clips unless the user asks (removing "filler" from screams breaks the reaction). Export only when the user
-asks for the MP4 (`start_export`, `wait_task`, `get_export_url`, download at once: the link is a one-use credential;
-never share it). The project link is the default delivery. Do not open or inspect the preview or the export yourself.
+Captions, sound effects and edits follow the official `aip:aip` skill on each project; when that pass is done, call
+`finish_project` if it has not run since, then give the `page_url`. Rough cut: keep it off for gameplay clips unless
+the user asks (removing "filler" from screams breaks the reaction).
+
+Export only when the user asks for the MP4: `finish_project` (if not yet run), then `start_export`, `wait_task`,
+`get_export_url`, and download at once (the link is a one-use credential; never share it). The project link is the
+default delivery. Do not open or inspect the preview or the export yourself.
 
 Limits to keep in mind: sources up to 3584 MiB and about 30 minutes for most accounts (15 in the web guide); export
 one MP4 up to 1080p and 30 fps in the source orientation; one task or commit per project at a time.

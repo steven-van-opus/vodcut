@@ -5,15 +5,17 @@ This script never talks to AI Producer. It checks the file against AI Producer's
 exact arguments sign_upload needs, and writes a provenance record you keep next to the clip.
 
 Usage:
-  python3 -I aip_prep.py check CLIP.mp4 [--max-minutes 30]
+  python3 -I aip_prep.py check CLIP.mp4 [--max-minutes 30] [--allow-landscape]
   python3 -I aip_prep.py sign-args CLIP.mp4
   python3 -I aip_prep.py record CLIP.mp4 --streamer NAME --platform youtube --source-url URL --start S --end E
                                         [--handle @name] [--title "..."] [--out CLIP.clip.json]
 
 check      container .mp4/.mov/.webm, at most 3584 MiB, at most --max-minutes long (30 for most accounts over
            MCP; the web app guide says 15), portrait 9:16 (AI Producer keeps the source orientation and
-           never reframes 16:9), frame rate (exports cap at 30 fps), H.264 video, an audio track (without
-           speech there are no captions). Exit 1 on an error, 0 otherwise; warnings never fail.
+           never reframes 16:9, so a landscape file is an error: compose it first with frame.py, or pass
+           --allow-landscape for a source that is meant to stay 16:9, such as a talking head), frame rate
+           (exports cap at 30 fps), H.264 video, an audio track (without speech there are no captions).
+           Exit 1 on an error, 0 otherwise; warnings never fail.
 sign-args  {"filename","content_type","size","sha256"}: pass these to
            mcp__plugin_aip_ai-producer__sign_upload, then PUT the bytes with every header it returns.
 record     provenance + credit line for the post (keep it: campaigns and takedown requests ask for it).
@@ -54,7 +56,7 @@ def probe(path):
             'duration': float(dur) if dur not in (None, 'N/A') else None}
 
 
-def check(path, max_minutes=30, info=None):
+def check(path, max_minutes=30, info=None, allow_landscape=False):
     errors, warnings = [], []
     ext = os.path.splitext(path)[1].lower()
     if ext not in TYPES:
@@ -79,8 +81,12 @@ def check(path, max_minutes=30, info=None):
         errors.append('no video stream')
     else:
         if w > h:
-            warnings.append(f'{w}x{h} is landscape: AI Producer keeps the source orientation and will not make it '
-                            'vertical. Compose 9:16 first (frame.py compose).')
+            msg = (f'{w}x{h} is landscape: AI Producer keeps the source orientation and will not make it vertical '
+                   '(the project would come back aspect_ratio_adjusted). Compose 9:16 first (frame.py compose)')
+            if allow_landscape:
+                warnings.append(msg + '; allowed by --allow-landscape, so the project stays 16:9.')
+            else:
+                errors.append(msg + ', or pass --allow-landscape if it is meant to stay 16:9.')
         elif w == h:
             warnings.append('square source: the project will be 1:1, not 9:16')
         elif abs(w / float(h) - 9 / 16.0) > 0.01:
@@ -140,6 +146,8 @@ def main(argv=None):
     sub = ap.add_subparsers(dest='cmd', required=True)
     s = sub.add_parser('check', help='check a clip against AI Producer source limits')
     s.add_argument('clip'); s.add_argument('--max-minutes', type=float, default=30)
+    s.add_argument('--allow-landscape', action='store_true',
+                   help='accept a 16:9 file that is meant to stay 16:9 (default: landscape is an error)')
     s = sub.add_parser('sign-args', help='print the sign_upload arguments (filename, content_type, size, sha256)')
     s.add_argument('clip')
     s = sub.add_parser('record', help='write the provenance + credit record for a clip')
@@ -151,7 +159,7 @@ def main(argv=None):
     s.add_argument('--out', default=None, help='default: CLIP with .clip.json')
     a = ap.parse_args(argv)
     if a.cmd == 'check':
-        r = check(a.clip, a.max_minutes)
+        r = check(a.clip, a.max_minutes, allow_landscape=a.allow_landscape)
         print(json.dumps(r, indent=1))
         return 0 if r['ok'] else 1
     if a.cmd == 'sign-args':

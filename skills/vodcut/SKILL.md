@@ -17,8 +17,15 @@ folder (`<slug>` = streamer + date). Details: [rubric](references/rubric.md), [A
 
 `ffmpeg`, `ffprobe`, `yt-dlp`, `whisper-cli` and a whisper.cpp model (`--model`, `$WHISPER_MODEL`,
 `${CLAUDE_SKILL_DIR}/models/` or `~/.cache/whisper/ggml-large-v3-turbo-q5_0.bin`). If one is missing, show the
-install line from the README and stop; never download a model or binary without the user's go-ahead. The AI
-Producer steps need the official plugin `aip@ai-producer-plugins`, signed in through `/mcp`.
+user these lines and stop; run them only with the user's go-ahead (never download a model or binary on your own):
+
+```bash
+brew install ffmpeg yt-dlp whisper-cpp
+mkdir -p ~/.cache/whisper && curl -L -o ~/.cache/whisper/ggml-large-v3-turbo-q5_0.bin \
+  https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-large-v3-turbo-q5_0.bin
+```
+
+The AI Producer steps need the official plugin `aip@ai-producer-plugins`, signed in through `/mcp`.
 
 ## 1. Scan the whole VOD
 
@@ -27,8 +34,10 @@ python3 -I "${CLAUDE_SKILL_DIR}/scripts/vodcut.py" scan "<VOD>" vodcut/<slug> --
 ```
 
 A day-long stream takes a while: run it in the background, tell the user it started, and report progress.
-Re-running resumes (finished transcript chunks are skipped). YouTube post-live VODs come down as 2-second
-fragments through `ytfrag.py`; Twitch and Kick through yt-dlp; a local file is read as is.
+Re-running resumes (finished transcript chunks are skipped). Before each download `vodcut.py` asks yt-dlp how
+YouTube serves the VOD and prints the answer: post-live VODs still served as 2-second fragments go through
+`ytfrag.py`; processed VODs (YouTube processes them later; the launch-day VODs took about a day) through yt-dlp,
+like Twitch and Kick; a local file is read as is.
 
 ## 2. Find the winners
 
@@ -51,7 +60,9 @@ python3 -I "${CLAUDE_SKILL_DIR}/scripts/vodcut.py" cut vodcut/<slug> --pick 1,3,
 
 Read the grid (yellow lines every 120 source px; the 360p preview is a third of 1080p, so multiply by 3) and write
 the facecam rect inside the camera's border. Check one composed frame with `frame.py still` before cutting.
-Override a cut with `--in-out 3=1:02:03-1:02:41`. Clips: 1080x1920, 30 fps, H.264/AAC, provenance in `.clip.json`.
+Override a cut with `--in-out 3=1:02:03-1:02:41` (each span downloads its own window, so a re-cut never reuses an
+old one). `cut` passes `--top-ratio`, `--focus-x` and `--divider` on to `frame.py` (same `--top-ratio` for clips
+that are joined later). Clips: 1080x1920, 30 fps, H.264/AAC, provenance in `.clip.json`.
 Bleep words a campaign wants bleeped with `bleep.py` (words, find, apply) before upload.
 
 ## 4. Open each one in AI Producer
@@ -67,6 +78,8 @@ give the user each `page_url` as soon as its project starts. Start all uploads, 
 
 Captions, sound effects and the export happen in AI Producer: hand each project to the official `aip:aip` skill
 (captions on by default, in its plain look or the look the user names; the MP4 only when the user asks).
+If no caption or edit pass follows in this session, call `finish_project` on each project once its `wait_task`
+succeeds, then give the `page_url`: `finish_project` ends the `authoring: true` status that locks the editor.
 
 ## 5. Report
 
@@ -74,9 +87,11 @@ Captions, sound effects and the export happen in AI Producer: hand each project 
 python3 -I "${CLAUDE_SKILL_DIR}/scripts/vodcut.py" report vodcut/<slug>
 ```
 
-Tell the user: hours scanned, moments found, wall time, API cost $0 (local), and one line per clip with its
-moment, length and AI Producer project link. Offer to delete the audio and previews (`audio.m4a`, `verify/*.mp4`):
-a day of audio is hundreds of MB.
+Tell the user: hours scanned, 30-second windows ranked, distinct moments (and how many `find --add` added), wall
+time, API cost $0 (local), and one line per clip with its moment, length and AI Producer project link. Quote the
+numbers as `report` prints them: it gives a wall time only when the folder's first scan fetched the audio itself
+and ran start to finish, and says why when it does not. Offer to delete the audio and previews (`audio.m4a`,
+`verify/*.mp4`): a day of audio is hundreds of MB.
 
 ## Rules
 

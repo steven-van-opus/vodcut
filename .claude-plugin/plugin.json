@@ -1,7 +1,7 @@
 {
   "name": "vodcut",
   "displayName": "/vodcut",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "/vodcut watches an entire stream VOD on your machine (whisper.cpp transcript, loudness and reaction cues, ranked 30-second windows, frame-sheet checks), cuts and frames each winner to 1080x1920, and opens every one as an AI Producer project so captions and export happen in AI Producer.",
   "author": {
     "name": "[OWNER]",

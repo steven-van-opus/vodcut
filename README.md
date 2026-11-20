@@ -53,6 +53,9 @@ mkdir -p ~/.claude/skills && cp -R vodcut/skills/vodcut ~/.claude/skills/vodcut
 
 Run it as `/vodcut`. The scripts travel inside the skill folder.
 
+gtavi-aiproducer already includes the /vodcut scan; install one or the other. Both ship a skill named `vodcut`, so
+with both installed a bare `/vodcut` goes to whichever loaded first.
+
 **3. Local tools**
 
 ```bash
@@ -85,8 +88,11 @@ VOD ──ytfrag.py / yt-dlp──> audio.m4a ──scan_vod.py──> transcrip
      ──AI Producer──> project + transcript + captions + export + editable link
 ```
 
-- **Long YouTube VODs** are served as 2-second fragments where `yt-dlp --download-sections` fails. `ytfrag.py`
-  fetches them in parallel, rotates the signed URLs YouTube throttles, resumes and retries.
+- **YouTube VODs, both ways YouTube serves them.** Post-live VODs still served as 2-second fragments, where
+  `yt-dlp --download-sections` fails, go through `ytfrag.py`: parallel, rotated signed URLs, resumes and retries.
+  Processed VODs (YouTube processes them later; the launch-day VODs took about a day) go through yt-dlp.
+  `vodcut.py` asks yt-dlp which one it is before every download, and `ytfrag.py` refuses a processed VOD rather
+  than pull the whole file once per fragment.
 - **Score** = loudness z-score of a window's 5 loudest seconds + 0.35 x reaction cues + 0.01 x words. Whisper's
   repetition loops (it repeats a line over music) are cleaned first, so a hallucination cannot win.
 - **Review flags** on every moment: `profanity` (bleep it), `sexual`, `spoiler`, `loop`.
@@ -96,9 +102,9 @@ VOD ──ytfrag.py / yt-dlp──> audio.m4a ──scan_vod.py──> transcrip
 | Script (`skills/vodcut/scripts/`) | What it does |
 |---|---|
 | `vodcut.py` | The pipeline: `scan`, `find`, `verify`, `cut`, `prep`, `report` |
-| `ytfrag.py` | Exact windows or whole tracks of YouTube post-live VODs |
+| `ytfrag.py` | Exact windows or whole tracks of YouTube post-live VODs still served as 2-second fragments |
 | `scan_vod.py` | Loudness + chunked whisper.cpp transcription, resumable |
-| `scan_frags.py` | Transcribes while the download is still running |
+| `scan_frags.py` | Transcribes while a fragment-served download is still running |
 | `rank_windows.py` | Ranked 30 s windows, loop cleaning, review flags, distinct moments |
 | `framesheet.py` | 12 frames of a moment in one image |
 | `frame.py` | Facecam grid, 9:16 still, 1080x1920 compose (stack, inset, full) |

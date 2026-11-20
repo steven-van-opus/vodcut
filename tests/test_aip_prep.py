@@ -27,12 +27,21 @@ class Check(unittest.TestCase):
         self.assertEqual(r['warnings'], [])
 
     def test_landscape_is_flagged(self):
+        # AI Producer never reframes: a 16:9 upload stays 16:9, so it is an error unless it is meant to stay 16:9
         r = self.run_check(width=1920, height=1080, fps=60.0)
-        self.assertTrue(r['ok'])
-        text = ' '.join(r['warnings'])
+        self.assertFalse(r['ok'])
+        text = ' '.join(r['errors'])
         self.assertIn('landscape', text)
         self.assertIn('frame.py compose', text)
-        self.assertIn('30 fps', text)
+        self.assertIn('--allow-landscape', text)
+        self.assertIn('30 fps', ' '.join(r['warnings']))
+        with tempfile.TemporaryDirectory() as d:
+            path = os.path.join(d, 'talk.mp4')
+            with open(path, 'wb') as f:
+                f.write(b'\0' * 1024)
+            r = prep.check(path, 30, info=self.facts(width=1920, height=1080), allow_landscape=True)
+        self.assertTrue(r['ok'])
+        self.assertIn('landscape', ' '.join(r['warnings']))
 
     def test_limits(self):
         self.assertFalse(self.run_check(duration=31 * 60.0)['ok'])
@@ -91,6 +100,11 @@ class RealFile(unittest.TestCase):
             out = json.loads(r.stdout)
             self.assertEqual((out['facts']['width'], out['facts']['height']), (1080, 1920))
             self.assertTrue(out['facts']['has_audio'])
+            wide = util.make_video(os.path.join(d, 'wide.mp4'), 1920, 1080, 1.0)
+            r = util.run_script('aip_prep.py', 'check', wide)
+            self.assertEqual(r.returncode, 1, r.stdout)
+            self.assertFalse(json.loads(r.stdout)['ok'])
+            self.assertEqual(util.run_script('aip_prep.py', 'check', wide, '--allow-landscape').returncode, 0)
 
 
 if __name__ == '__main__':

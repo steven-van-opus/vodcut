@@ -26,16 +26,47 @@ class Sources(unittest.TestCase):
             vc.parse_overrides(['three=1-2'])
 
     def test_commands_per_source(self):
-        yt = vc.classify('qSyo5d-dVzA')
-        dst, cmds = vc.audio_cmds(yt, '/tmp/out', '139', 24)
+        # still served as 2-second fragments (right after the stream): ytfrag.py
+        frags = dict(vc.classify('qSyo5d-dVzA'), protocol='http_dash_segments')
+        dst, cmds = vc.audio_cmds(frags, '/tmp/out', '139', 24)
         self.assertEqual(cmds[0][-6:], ['track', 'qSyo5d-dVzA', '139', dst, '--jobs', '24'])
-        w = vc.window_cmd(yt, 100.0, 140.5, 'o.mp4', '134', '139', preview=True)[0]
+        w = vc.window_cmd(frags, 100.0, 140.5, 'o.mp4', '134', '139', preview=True)[0]
         self.assertEqual(w[-9:], ['window', 'qSyo5d-dVzA', '100.00', '140.50', 'o.mp4', '--video', '134', '--audio', '139'])
+        # processed into whole files (https), or never probed: yt-dlp, never ytfrag.py (the server would answer every
+        # "fragment" with the whole file)
+        for proto in ('https', None):
+            yt = dict(vc.classify('qSyo5d-dVzA'), protocol=proto)
+            dst, cmds = vc.audio_cmds(yt, '/tmp/out', '139', 24)
+            self.assertEqual(cmds[0][:5], ['yt-dlp', '--no-warnings', '--no-playlist', '-f', '139/ba/w'])
+            self.assertEqual(cmds[0][-1], 'https://www.youtube.com/watch?v=qSyo5d-dVzA')
+            self.assertEqual(cmds[1][0], '__extract__')
+            prev = vc.window_cmd(yt, 100.0, 140.5, 'o.mp4', '134', '139', preview=True)[0]
+            full = vc.window_cmd(yt, 100.0, 140.5, 'o.mp4', '299', '140')[0]
+            self.assertEqual(prev[prev.index('-f') + 1], '134+139/bv*[height<=360]+ba/b[height<=360]/w')
+            self.assertEqual(full[full.index('-f') + 1], '299+140/bv*[height<=1080]+ba/b')
+            for c in (prev, full):
+                self.assertEqual(c[c.index('--download-sections') + 1], '*100.00-140.50')
+                self.assertEqual(c[c.index('-o') + 1], 'o.mp4')
+            self.assertFalse(any('ytfrag.py' in part for c in cmds + [prev, full] for part in c))
         tw = vc.classify('https://www.twitch.tv/videos/1')
         w = vc.window_cmd(tw, 100, 140, 'o.mp4', '299', '140')[0]
         self.assertIn('--download-sections', w)
         self.assertIn('*100.00-140.00', w)
-        self.assertEqual(vc.audio_cmds(tw, '/tmp/out')[1][1][0], '__extract__')
+        dst, cmds = vc.audio_cmds(tw, '/tmp/out')
+        self.assertEqual(cmds[0][cmds[0].index('-f') + 1], 'ba/w')   # never full-quality video just for the audio
+        self.assertEqual(cmds[1][0], '__extract__')
+        # a local file is extracted in place, never deleted; its windows are published by a rename
+        f = {'kind': 'file', 'path': '/tmp/stream.mp4'}
+        self.assertEqual(vc.audio_cmds(f, '/tmp/out')[1], [['__extract__', '/tmp/stream.mp4', '/tmp/out/audio.m4a', 'file']])
+        w = vc.window_cmd(f, 1, 5, '/tmp/out/verify/m01.mp4', '134', '139', preview=True)
+        self.assertEqual(w[0][-1], '/tmp/out/verify/m01.part.mp4')
+        self.assertEqual(w[1], ['__rename__', '/tmp/out/verify/m01.part.mp4', '/tmp/out/verify/m01.mp4'])
+
+    def test_same_source_ignores_the_probed_protocol(self):
+        yt = vc.classify('https://youtu.be/qSyo5d-dVzA')
+        self.assertTrue(vc.same_source(dict(yt, protocol='http_dash_segments'), vc.classify('qSyo5d-dVzA')))
+        self.assertFalse(vc.same_source(yt, vc.classify('VZqAPdUvqnQ')))
+        self.assertFalse(vc.same_source(None, yt))
 
 
 @unittest.skipUnless(util.have('ffmpeg', 'ffprobe', 'whisper-cli') and MODEL and os.path.exists(MODEL),

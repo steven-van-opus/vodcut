@@ -1,10 +1,13 @@
 #!/usr/bin/env python3
 """Transcribe a stream while ytfrag.py is still downloading it.
 
+Only for YouTube VODs still served as 2-second fragments (the ones `ytfrag.py track` downloads): a processed
+VOD is one file that yt-dlp fetches in minutes, so there is nothing to overlap.
 `ytfrag.py track` keeps 2-second fragments in OUT.m4a.raw.frags<FORMAT>/ until the whole track is in.
 This script turns every complete 20-minute run of fragments (600 fragments) into whisper.cpp segments
 as soon as it lands, in the same transcript.jsonl format scan_vod.py writes, so scan_vod.py later
-skips those chunks. It stops when the assembled track file appears.
+skips those chunks. It stops when the assembled track file appears; a chunk whose transcription finishes
+after that is dropped (scan_vod.py does it instead), so no 20-minute span is written twice.
 
 Usage:
   python3 -I scan_frags.py FRAG_DIR OUT_DIR ASSEMBLED_PATH [--chunks 72] [--model PATH] [--threads 8]
@@ -23,6 +26,21 @@ from scan_vod import find_model  # noqa: E402
 FRAGS_PER_CHUNK = 600  # 600 x 2 s = 1200 s, the chunk size scan_vod.py uses by default
 
 
+def done_chunks(tj):
+    """Chunks transcript.jsonl already marks finished (by this script or by scan_vod.py)."""
+    done = set()
+    if os.path.exists(tj):
+        with open(tj, encoding='utf-8', errors='replace') as f:
+            for line in f:
+                try:
+                    d = json.loads(line)
+                except ValueError:
+                    continue
+                if d.get('marker') == 'chunk_done':
+                    done.add(d['chunk'])
+    return done
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument('frag_dir')
@@ -38,18 +56,8 @@ def main(argv=None):
         return 1
     os.makedirs(a.out_dir, exist_ok=True)
     tj = os.path.join(a.out_dir, 'transcript.jsonl')
-    done = set()
-    if os.path.exists(tj):
-        with open(tj, encoding='utf-8', errors='replace') as f:
-            for line in f:
-                try:
-                    d = json.loads(line)
-                except ValueError:
-                    continue
-                if d.get('marker') == 'chunk_done':
-                    done.add(d['chunk'])
     for i in range(a.chunks):
-        if i in done:
+        if i in done_chunks(tj):
             continue
         sqs = range(i * FRAGS_PER_CHUNK, (i + 1) * FRAGS_PER_CHUNK)
         while True:
@@ -83,6 +91,16 @@ def main(argv=None):
         base = os.path.join(a.out_dir, f'_f{i}')
         subprocess.run(['whisper-cli', '-m', model, '-f', wav, '-l', 'en', '-t', str(a.threads), '-np', '-oj', '-bs', '1', '-bo', '1',
                         '-of', base], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=True)
+        if os.path.exists(a.assembled) or i in done_chunks(tj):
+            # The track was assembled while whisper ran, so scan_vod.py may already have started on this chunk
+            # (or another process finished it): appending now would put the same 20 minutes in twice.
+            for p in (wav, base + '.json'):
+                if os.path.exists(p):
+                    os.remove(p)
+            if os.path.exists(a.assembled):
+                print(f'assembled track appeared during chunk {i + 1}; leaving it and the rest to scan_vod.py', flush=True)
+                return 0
+            continue
         with open(base + '.json', 'rb') as f:
             segs = json.loads(f.read().decode('utf-8', 'replace')).get('transcription', [])
         s0 = i * FRAGS_PER_CHUNK * 2
