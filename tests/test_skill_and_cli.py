@@ -15,7 +15,8 @@ AIP_TOOLS = {'get_pricing', 'get_editing_preset', 'sign_upload', 'start_transcri
              'get_transcript', 'start_export', 'get_export_url', 'finish_project', 'commit_workspace', 'list_workspace',
              'get_workspace_file', 'sign_workspace_upload', 'list_sound_effects', 'place_sound_effects', 'get_view_url',
              'list_reference_presets', 'get_reference_preset', 'get_project', 'list_projects'}
-BANNED_COPY = [r'up to \$\d', r'while you sleep', r'autopilot', r'get rich', r'passive income', r'guaranteed', r'millionaire']
+BANNED_COPY = [r'up to \$\d', r'while you sleep', r'autopilot', r'get rich', r'passive income', r'guaranteed', r'millionaire',
+               r'\bbeta\b']  # no "beta" status label anywhere in the copy (since 2026-11-20)
 
 
 class Help(unittest.TestCase):
@@ -120,6 +121,20 @@ class Repo(unittest.TestCase):
                     text = util.read(os.path.join(root, f))
                     for pat in BANNED_COPY:
                         self.assertIsNone(re.search(pat, text, re.I), f'{f}: {pat}')
+
+    def test_one_paste_prompt(self):
+        """Install ends with one paste-ready prompt, 900 characters at most, that names only this repo's skill."""
+        readme = util.read(os.path.join(util.ROOT, 'README.md'))
+        install = readme[readme.index('## Install'):readme.index('## Use')]
+        blocks = re.findall(r'```(\w*)\n(.*?)\n```', install[install.index('### One-paste prompt'):], re.S)
+        self.assertEqual([lang for lang, _ in blocks], ['text'])
+        prompt = blocks[0][1]
+        self.assertLessEqual(len(prompt), 900)
+        plugin = json.loads(util.read(os.path.join(util.ROOT, '.claude-plugin', 'plugin.json')))['name']
+        skills = [d for d in os.listdir(util.SKILLS) if os.path.exists(os.path.join(util.SKILLS, d, 'SKILL.md'))]
+        named = set(re.findall(r'(?<![\w/])/[a-z][\w:-]*', prompt))
+        self.assertTrue(named)
+        self.assertLessEqual(named, {f'/{s}' for s in skills} | {f'/{plugin}:{s}' for s in skills})
 
 
 if __name__ == '__main__':
