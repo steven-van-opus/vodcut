@@ -37,7 +37,7 @@ AI Producer in coding agents is in beta for a limited set of accounts.
 **2a. /vodcut as a plugin**
 
 ```text
-/plugin marketplace add [OWNER]/vodcut
+/plugin marketplace add steven-van-opus/vodcut
 /plugin install vodcut@vodcut
 ```
 
@@ -47,7 +47,7 @@ Code keeps it enabled; without it, /vodcut installs but does not load.
 **2b. /vodcut as a plain skill**
 
 ```bash
-git clone https://github.com/[OWNER]/vodcut.git
+git clone https://github.com/steven-van-opus/vodcut.git
 mkdir -p ~/.claude/skills && cp -R vodcut/skills/vodcut ~/.claude/skills/vodcut
 ```
 

@@ -103,7 +103,7 @@ class Repo(unittest.TestCase):
 
     def test_readme_placeholders_and_copy(self):
         readme = util.read(os.path.join(util.ROOT, 'README.md'))
-        self.assertIn('[OWNER]', readme)
+        self.assertIn('steven-van-opus', readme)
         for ph in ('[HOURS_SCANNED]', '[MOMENTS_FOUND]', '[WALL_TIME]'):
             self.assertNotIn(ph, readme)
         for cmd in ('claude plugin install aip@ai-producer-plugins', '/plugin install vodcut@vodcut',

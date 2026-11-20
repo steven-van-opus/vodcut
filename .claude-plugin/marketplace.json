@@ -2,7 +2,7 @@
   "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
   "name": "vodcut",
   "owner": {
-    "name": "[OWNER]"
+    "name": "steven-van-opus"
   },
   "metadata": {
     "description": "Single-plugin marketplace for /vodcut: scan a whole stream VOD locally and open the best moments in AI Producer.",
@@ -18,10 +18,10 @@
       "description": "One skill: /vodcut scans an entire stream VOD on your machine, finds and verifies the best moments, cuts them 1080x1920 and opens each one as an AI Producer project.",
       "version": "1.1.0",
       "author": {
-        "name": "[OWNER]"
+        "name": "steven-van-opus"
       },
-      "homepage": "https://github.com/[OWNER]/vodcut",
-      "repository": "https://github.com/[OWNER]/vodcut",
+      "homepage": "https://github.com/steven-van-opus/vodcut",
+      "repository": "https://github.com/steven-van-opus/vodcut",
       "license": "MIT",
       "category": "productivity",
       "keywords": [

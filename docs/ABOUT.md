@@ -12,7 +12,7 @@
 
 | Placeholder | Where | Fill from |
 |---|---|---|
-| `[OWNER]` | README.md, .claude-plugin/plugin.json, .claude-plugin/marketplace.json, LICENSE | the GitHub owner |
+| `steven-van-opus` | README.md, .claude-plugin/plugin.json, .claude-plugin/marketplace.json, LICENSE | the GitHub owner |
 
 ## The launch numbers
 
