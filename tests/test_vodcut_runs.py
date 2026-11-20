@@ -184,6 +184,24 @@ class Recut(FakeTools):
         sections = [c[c.index('--download-sections') + 1] for c in self.calls() if '--download-sections' in c]
         self.assertEqual(sections, ['*1.00-4.00', '*2.00-7.50'])
 
+    def test_verify_previews_follow_the_moment_span(self):
+        # verify right after the loudness pass, then again once whisper has re-ranked: rank 1 moved
+        src = util.make_video(os.path.join(self.tmp, 'stream.mp4'), 1920, 1080, 12.0)
+        out = self.make_run(YT, moments=[dict(MOMENT, **{'in': 1.0, 'out': 4.0})])
+        preview = os.path.join(out, 'verify', 'm01.mp4')
+        for _ in range(2):   # the second run reuses the preview: same span
+            r = self.run_script('vodcut.py', 'verify', out, '--top', '1', FAKE_SOURCE=src)
+            self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        self.assertAlmostEqual(self.duration(preview), 3.0, delta=0.1)
+        with open(os.path.join(out, 'scan', 'moments.json'), 'w') as f:
+            json.dump({'moments': [dict(MOMENT, **{'in': 5.0, 'out': 10.5})]}, f)
+        r = self.run_script('vodcut.py', 'verify', out, '--top', '1', FAKE_SOURCE=src)
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        self.assertAlmostEqual(self.duration(preview), 5.5, delta=0.1)
+        self.assertEqual(util.read(os.path.join(out, 'verify', 'm01.span')).strip(), '5.00-10.50')
+        sections = [c[c.index('--download-sections') + 1] for c in self.calls() if '--download-sections' in c]
+        self.assertEqual(sections, ['*1.00-4.00', '*5.00-10.50'])
+
 
 class Report(unittest.TestCase):
     vc = util.load('vodcut')

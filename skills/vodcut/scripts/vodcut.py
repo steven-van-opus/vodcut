@@ -29,7 +29,8 @@ OUT/
   vodcut.json               the source, its delivery protocol, the scan runs and what every step produced
   audio.m4a                 mono 16 kHz track the scan reads (downloaded or extracted)
   scan/                     loudness.tsv, transcript.jsonl, windows.tsv, top_windows.md, moments.json, moments.md, run.json
-  verify/mNN.mp4            360p preview of moment NN, mNN_sheet.jpg its frame sheet, index.md the list to read
+  verify/mNN.mp4            360p preview of moment NN (mNN.span: the window it holds), mNN_sheet.jpg its frame sheet,
+                            index.md the list to read
   clips/mNN_9x16.mp4        the finished 1080x1920 30 fps clip, .clip.json its provenance + credit, .sign.json the
                             sign_upload arguments (filename, content_type, size, sha256)
   clips/mNN_src_IN-OUT.mp4  the downloaded window, named by its span (kept with --keep-src or after a failed compose)
@@ -350,11 +351,24 @@ def cmd_verify(a):
         if src['kind'] == 'file' and not has_video(src['path']):
             rows.append((m, None, 'audio-only source: no frames to check'))
             continue
-        if not os.path.exists(clip):
+        # mNN.span records which window mNN.mp4 holds: a later ranking (after whisper, or a new scan) can give
+        # rank NN another span, and an old preview would put the wrong frames on the sheet
+        span_file, span = os.path.join(vdir, f'{tag}.span'), f"{m['in']:.2f}-{m['out']:.2f}"
+        if os.path.exists(span_file):
+            with open(span_file, encoding='utf-8') as f:
+                same = f.read().strip() == span
+        else:
+            same = False
+        if not (os.path.exists(clip) and same):
             if not probed:  # once per run, right before the first download
                 src, probed = fresh_source(a.out, st, f'{a.audio}/ba', a.dry_run), True
+            if os.path.exists(clip) and not a.dry_run:
+                os.remove(clip)
             for c in window_cmd(src, m['in'], m['out'], clip, a.video, a.audio, preview=True):
                 run(c, a.dry_run)
+            if not a.dry_run:
+                with open(span_file, 'w', encoding='utf-8') as f:
+                    f.write(span + '\n')
         run(PY + [script('framesheet.py'), clip, sheet, '--cols', '4', '--rows', '3', '--width', '1600'], a.dry_run)
         rows.append((m, sheet, ''))
     if a.dry_run:

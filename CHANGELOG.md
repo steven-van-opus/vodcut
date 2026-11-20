@@ -5,14 +5,17 @@
 - YouTube VODs are routed by how YouTube serves them. `vodcut.py` asks yt-dlp for the delivery protocol before every
   download (scan, verify, cut) and stores it in `vodcut.json`: post-live VODs still served as 2-second fragments go
   through `ytfrag.py`, processed VODs through yt-dlp (`139/ba/w` for the scan audio, `299+140` / `134+139` windows
-  with `--download-sections`). A day after a stream YouTube ignores `&sq=N` and answers every "fragment" with the
-  whole file, which sent the old fragment path into terabytes of transfer.
+  with `--download-sections`). Once YouTube has processed a VOD (about a day after the launch streams) it ignores
+  `&sq=N` and answers every "fragment" with the whole file, which sent the old fragment path into terabytes of
+  transfer.
 - `ytfrag.py` checks the protocol first and stops on a processed VOD; a reply over 16 MB (no 2-second fragment is)
   stops the download after one round. `track` writes a `.part` file, checks ffmpeg's exit code and keeps the
   fragments until the track is complete; `window` also publishes its output only when it is complete.
 - `vodcut.py cut`: the downloaded window is named by its span (`mNN_src_IN-OUT.mp4`), so a re-cut with a new
   `--in-out` never composes an old window or records times the clip does not have; reversed spans are refused;
   `--top-ratio`, `--focus-x` and `--divider` are passed to `frame.py compose`.
+- `vodcut.py verify`: `verify/mNN.span` records the window each preview holds, so a moment that a later
+  ranking moved (verify after the loudness pass, again after whisper) gets a new preview instead of the old frames.
 - `vodcut.py report`: `WINDOWS_RANKED`, `MOMENTS_RANKED` and `MOMENTS_ADDED_BY_FIND` replace `MOMENTS_FOUND`, and
   `WALL_TIME` comes only from a folder's first scan that fetched the audio itself and ran start to finish (each
   scan run is recorded in `vodcut.json`); a resumed or seeded folder says why it has none.
