@@ -32,7 +32,7 @@ claude plugin install aip@ai-producer-plugins --scope user
 ```
 
 Start a new session and sign in with `/mcp` -> `plugin:aip:ai-producer` (your OpusClip account, in the browser).
-AI Producer in coding agents is in beta for a limited set of accounts.
+AI Producer in coding agents is rolling out and open to a limited set of accounts.
 
 **2a. /vodcut as a plugin**
 
@@ -65,6 +65,30 @@ mkdir -p ~/.cache/whisper && curl -L -o ~/.cache/whisper/ggml-large-v3-turbo-q5_
 ```
 
 Python 3.9+ (standard library only).
+
+### One-paste prompt
+
+With steps 1-3 done, paste this into Claude Code. Edit the [brackets] or keep the defaults:
+
+```text
+Run /vodcut (/vodcut:vodcut if you installed the plugin) end to end with:
+VOD: [a link or local file; default qSyo5d-dVzA, IShowSpeed's first GTA 6 stream]
+Clips: [5]
+Moments fans already clipped: [none, or phrases like "is that hulk"]
+Style: [AI Producer's plain captions, no reference style]
+
+1. Scan the whole VOD in the background and tell me when the moments are ranked.
+2. Add those moments, check the best on frame sheets, then show me your picks and why.
+   Wait for my OK.
+3. Cut each pick 1080x1920, facecam on top and gameplay below, and credit the streamer.
+4. Open every clip as an AI Producer project with captions in that style.
+5. Report the numbers and each project link.
+Before anything that costs credits, tell me the price and wait for my yes.
+Don't export until I ask, and never post anything.
+```
+
+It runs the whole flow, VOD to editable AI Producer projects, and waits for your OK on the picks and before anything
+that costs credits. No export unless you ask, and no posting.
 
 ## Use
 

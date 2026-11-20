@@ -2,7 +2,7 @@
 
 **Description** (350 characters max):
 
-> /vodcut, an open-source Claude Code skill: watches an entire stream VOD on your machine (whisper.cpp + loudness + reaction cues), verifies the best moments on frame sheets, cuts them 1080x1920 and opens each one as an AI Producer project for captions and export.
+> /vodcut, an open-source Claude Code skill: watches an entire stream VOD on your machine (whisper.cpp + loudness + reaction cues), verifies the best moments on frame sheets, cuts them 1080x1920 and opens each one as an AI Producer project for captions and export. The README's one-paste prompt runs it end to end.
 
 **Website:** https://producer.opus.pro
 
